@@ -1,0 +1,56 @@
+{
+  "id": "halo-6868",
+  "name": "HALO68",
+  "version": "1.0.0",
+  "main": "index.html",
+  "host": {
+    "app": "PS",
+    "minVersion": "24.0.0"
+  },
+  "manifestVersion": 5,
+  "entrypoints": [
+    {
+      "type": "panel",
+      "id": "halo68Panel",
+      "minimumSize": { "width": 240, "height": 220 },
+      "maximumSize": { "width": 2000, "height": 2000 },
+      "preferredDockedSize": { "width": 260, "height": 360 },
+      "preferredFloatingSize": { "width": 260, "height": 360 },
+      "label": { "default": "HALO68" },
+      "icons": [
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/dark@1x.png",
+          "scale": [1, 2],
+          "theme": ["darkest", "dark", "medium"],
+          "species": ["generic"]
+        },
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/light@1x.png",
+          "scale": [1, 2],
+          "theme": ["lightest", "light"],
+          "species": ["generic"]
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "width": 23,
+      "height": 23,
+      "path": "icons/dark@1x.png",
+      "scale": [1, 2],
+      "theme": ["darkest", "dark", "medium"]
+    },
+    {
+      "width": 23,
+      "height": 23,
+      "path": "icons/light@1x.png",
+      "scale": [1, 2],
+      "theme": ["lightest", "light"]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<!---不要用sp，ps2027可能会不加载--->
+<!---样式全在 <style> 里，不用管style.css--->
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- 坑 3：样式必须内嵌 <style>，外部 <link> 在 PS 27 面板里不生效 -->
+  <style>
+    body {
+      background: #222222;
+      color: #f1f1f1;
+      font-family: "Adobe Clean", "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .title { font-size: 20px; font-weight: bold; margin: 0 0 8px; color: #ffffff; }
+    .hint  { margin: 0 0 12px; color: #c6c6c6; font-size: 13px; line-height: 1.6; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .primary   { background: #0d6efd; border: 1px solid #0d6efd; color: #ffffff; }
+    .secondary { background: #3a3a3a; border: 1px solid #555555; color: #f1f1f1; }
+    .status { margin: 12px 0 0; color: #9dd6ff; font-size: 13px; line-height: 1.5; }
+    .status.error { color: #ff9b9b; }
+    .layerTree {
+      margin: 12px 0 0;
+      padding: 10px;
+      border: 1px solid #555555;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.6;
+      font-family: Consolas, "Courier New", monospace;
+      white-space: pre;
+      max-height: 180px;
+      overflow: auto;
+    }
+  </style>
+  <!-- defer：等 DOM 解析完再执行 main.js，保证按钮能绑上 -->
+  <script src="main.js" defer></script>
+</head>
+<body>
+  <div class="title">HALO68</div>
+  <div class="hint">1. 打开一张单人照片<br>2. 选中照片图层<br>3. 点击「添加光环」</div>
+
+  <button id="btnCreateEffect" class="btn primary" type="button">添加光环（创建图层组）</button>
+  <button id="btnRefresh" class="btn secondary" type="button">刷新图层结构</button>
+
+  <div id="status" class="status">就绪。</div>
+  <!-- 坑 11：main.js 里引用了 #layers，HTML 里就必须有这个元素 -->
+  <div id="layers" class="layerTree">（暂无打开的文档）</div>
+</body>
+</html>
