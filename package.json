@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "description": "Starter template for creating Adobe UXP based-Photoshop plugin.",
   "author": "Adobe Inc",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/photoshop": "^25.0.4"
+  }
 }

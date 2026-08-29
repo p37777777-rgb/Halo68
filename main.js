@@ -42,8 +42,8 @@ async function createHaloEffect() {
     return;
   }
 
-  const documentToEdit = app.activeDocument;
-  const sourceLayer = documentToEdit.activeLayers[0];
+  const documentToEdit = app.activeDocument; //当前文档
+  const sourceLayer = documentToEdit.activeLayers[0]; //当前选中的图层
 
   if (!sourceLayer) {
     setStatus("请选择图片图层", true);
@@ -61,12 +61,75 @@ async function createHaloEffect() {
   let haloFile = null;
   try {
     const pluginFolder = await localFileSystem.getPluginFolder();
-    ((haloFile = await pluginFolder), getEntry(HALO_RESOURCE_PATH));
+    haloFile = await pluginFolder.getEntry(HALO_RESOURCE_PATH);
     if (!haloFile.isFile) throw new Error("当前文件有误");
   } catch (e) {
-    setStatus("找不到临时内置资源", true);
+    setStatus(e.message, true);
     return;
   }
   setBusy(true);
   setStatus("正在建立图层中...");
+
+  try {
+    //所有文档都被executeAsModal包裹起来，保证操作是原子的，不会被其他操作打断防止并发、失败回滚
+    await core.executeAsModal(async () => {
+      //防止重复操作，删除幂图层
+      await removePreviousHaloEffect(documentToEdit);
+
+      //新建组
+      const effectGroup = await documentToEdit.createLayerGroup({
+        name: EFFECT_GROUP_NAME,
+      });
+
+      //复制出背景图层
+      //从上到下：subject->haloglow->halo->Background
+
+      await sourceLayer.duplicate(
+        effectGroup,
+        constants.ElementPlacement.PLACEINSIDE,
+        "Background",
+      );
+
+      //导入光环放入组内,background上方
+      const halo = await importHaloIntoGroup(
+        haloFile,
+        documentToEdit,
+        effectGroup,
+      );
+      await fitHaloToCanvas(halo, documentToEdit);//?自动摆放位置
+
+      //glow副本图层 混合+不透明度+高斯模糊
+      const glow = await halo.duplicate(
+        effectGroup,
+        constants.ElementPlacement.PLACEINSIDE,
+        "Halo Glow"
+      );
+      glow.opacity = 55;//不透明度
+      glow.blendMode = constants.BlendMode.SCREEN;//混合模式滤色
+
+      //只要对有效的Halo图层打上高斯模糊
+      await glow.applyGaussianBlur(18);//高斯模糊
+
+      //主体层
+      const subject = await sourceLayer.duplicate(
+        effectGroup,
+        constants.ElementPlacement.PLACEINSIDE,
+        "Subject"
+      );
+      subject.visible = false;
+
+      halo.link(glow);
+
+      await selectLayer(halo,documentToEdit);
+    },{ commandName: "Create Halo Effect" });
+    setStatus("光环效果已创建");
+    await refreshLayerList();
+  } catch (error) {
+    console.error(error);
+    setStatus(`创建失败:${error.message}`, true);
+  }finally{
+    setBusy(false);
+  }
+
+  
 }
