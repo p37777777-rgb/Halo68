@@ -10,7 +10,7 @@ const EFFECT_GROUP_NAME = "HALO68 Effect";
 const HALO_ASSET_PATH = "resources/IBUKI.png";
 //临时混合模式 = 屏幕（Screen）、不透明度 = 55%、高斯模糊半径 = 18px
 const GLOW = {
-  blendMode: constants.BlendMode.SCREEN,
+  blendMode: constants.BlendMode.SCREEN, //滤色
   opacity: 55,
   blurRadius: 18,
 };
@@ -72,64 +72,170 @@ async function createHaloEffect() {
 
   try {
     //所有文档都被executeAsModal包裹起来，保证操作是原子的，不会被其他操作打断防止并发、失败回滚
-    await core.executeAsModal(async () => {
-      //防止重复操作，删除幂图层
-      await removePreviousHaloEffect(documentToEdit);
+    await core.executeAsModal(
+      async () => {
+        //防止重复操作，删除幂图层
+        await removePreviousEffect(documentToEdit);
 
-      //新建组
-      const effectGroup = await documentToEdit.createLayerGroup({
-        name: EFFECT_GROUP_NAME,
-      });
+        //新建组
+        const effectGroup = await documentToEdit.createLayerGroup({
+          name: EFFECT_GROUP_NAME,
+        });
 
-      //复制出背景图层
-      //从上到下：subject->haloglow->halo->Background
+        //复制出背景图层
+        //从上到下：subject->haloglow->halo->Background
 
-      await sourceLayer.duplicate(
-        effectGroup,
-        constants.ElementPlacement.PLACEINSIDE,
-        "Background",
-      );
+        await sourceLayer.duplicate(
+          effectGroup,
+          constants.ElementPlacement.PLACEINSIDE,
+          "Background",
+        );
 
-      //导入光环放入组内,background上方
-      const halo = await importHaloIntoGroup(
-        haloFile,
-        documentToEdit,
-        effectGroup,
-      );
-      await fitHaloToCanvas(halo, documentToEdit);//?自动摆放位置
+        //导入光环放入组内,background上方
+        const halo = await importHaloIntoGroup(
+          haloFile,
+          documentToEdit,
+          effectGroup,
+        );
+        await fitHaloToCanvas(halo, documentToEdit); //?自动摆放位置
 
-      //glow副本图层 混合+不透明度+高斯模糊
-      const glow = await halo.duplicate(
-        effectGroup,
-        constants.ElementPlacement.PLACEINSIDE,
-        "Halo Glow"
-      );
-      glow.opacity = 55;//不透明度
-      glow.blendMode = constants.BlendMode.SCREEN;//混合模式滤色
+        //glow副本图层 混合+不透明度+高斯模糊
+        const glow = await halo.duplicate(
+          effectGroup,
+          constants.ElementPlacement.PLACEINSIDE,
+          "Halo Glow",
+        );
+        glow.opacity = GLOW.opacity; //不透明度
+        glow.blendMode = GLOW.blendMode;
+        //constants.BlendMode.SCREEN; //混合模式滤色
 
-      //只要对有效的Halo图层打上高斯模糊
-      await glow.applyGaussianBlur(18);//高斯模糊
+        //只要对有效的Halo图层打上高斯模糊
+        await glow.applyGaussianBlur(GLOW.blurRadius); //高斯模糊
 
-      //主体层
-      const subject = await sourceLayer.duplicate(
-        effectGroup,
-        constants.ElementPlacement.PLACEINSIDE,
-        "Subject"
-      );
-      subject.visible = false;
+        //主体层
+        const subject = await sourceLayer.duplicate(
+          effectGroup,
+          constants.ElementPlacement.PLACEINSIDE,
+          "Subject",
+        );
+        subject.visible = false;
 
-      halo.link(glow);
+        halo.link(glow);
 
-      await selectLayer(halo,documentToEdit);
-    },{ commandName: "Create Halo Effect" });
+        await selectLayer(halo, documentToEdit);
+      },
+      { commandName: "Create Halo Effect" },
+    );
     setStatus("光环效果已创建");
     await refreshLayerList();
   } catch (error) {
     console.error(error);
     setStatus(`创建失败:${error.message}`, true);
-  }finally{
+  } finally {
     setBusy(false);
   }
+}
+//打开内置png，复制进图层组，同时关闭临时文档
+async function importHaloIntoGroup(haloFile, targetDocument, targetGroup) {
+  const haloDocument = await app.open(haloFile);
+  try {
+    const sourceHaloLayer = haloDocument.activeLayers[0];
+    if (!sourceHaloLayer) {
+      throw new Error("光环无可导入的图层");
+    }
+    return await sourceHaloLayer.duplicate(
+      targetGroup,
+      constants.ElementPlacement.PLACEINSIDE,
+      "Halo",
+    );
+  } finally {
+    await haloDocument.close(constants.SaveOptions.DONOTSAVECHANGES);
+  }
+}
 
-  
+//临时放置初始位置
+async function fitHaloToCanvas(haloLayer, targetDocument) {
+  const initialBounds = haloLayer.boundsNoEffects;
+  if (!initialBounds || initialBounds.height <= 0 || initialBounds.width <= 0) {
+    throw new Error("光环图层为空");
+  }
+
+  const desiredWidth = targetDocument.width * 0.36;
+  //大小上下限限制
+  const scalePercent = Math.min(
+    250,
+    Math.max(5, (desiredWidth / initialBounds.width) * 100),
+  );
+  await haloLayer.scale(
+    //水平和垂直缩放比例
+    scalePercent,
+    scalePercent,
+    //图层中心为锚点
+    constants.AnchorPosition.MIDDLECENTER,
+  );
+
+  const bounds = haloLayer.boundsNoEffects;
+  //定目标中心（画布）
+  const desiredCenterX = targetDocument.width / 2;
+  const desiredCenterY = targetDocument.height * 0.22;
+  //将光环位移到目标中心
+  await haloLayer.translate(
+    desiredCenterX - (bounds.left + bounds.width / 2),
+    desiredCenterY - (bounds.top + bounds.height / 2),
+  );
+}
+//删除之前的效果组（halo68创建的）
+async function removePreviousEffect(targetDocument) {
+  const existingEffect = Array.from(targetDocument.layers).find(
+    (layer) => layer.name === EFFECT_GROUP_NAME,
+  );
+  if (existingEffect) {
+    await existingEffect.delete();
+  }
+}
+
+//用action manager发select命令选中图层
+async function selectLayer(layer, targetDocument) {
+  await require("photoshop").action.batchPlay(
+    [
+      {
+        _obj: "select", // 命令类型：选中
+        _target: [{ _ref: "layer", _id: layer.id }], // 用id引用目标图层
+        makeVisible: false, //// 选中时不改变图层的可见性
+        _options: { dialogOptions: "dontDisplay" }, // 静默执行，不弹任何对话框
+      },
+    ],
+    { immediateRedraw: true }, //执行后立即重绘画布
+  );
+}
+//在当前面板更新图层树
+function refreshLayerList() {
+  const layerBox = document.getElementById("layers");
+  if (!layerBox) return;
+
+  if (app.documents.length === 0) {
+    layerBox.textContent = "暂无可用文档";
+    return;
+  }
+  const lines = [];
+  const visit = (layer, indent) => {
+    const marker = layer.visible ? "" : "[隐藏]";
+    lines.push(`${" ".repeat(indent)}${layer.name}${marker}`);
+    if (layer.layers) {
+      for (const child of layer.layers) visit(child, indent + 1);
+    }
+  };
+  for (const layer of app.activeDocument.layers) visit(layer, 0);
+  layerBox.textContent = lines.join("\n");
+}
+
+function setStatus(message, isError = false) {
+  const status = document.getElementById("status");
+  status.textContent = message;
+  status.className = isError ? "status error" : "status";
+}
+
+function setBusy(isBusy) {
+  document.getElementById("btnCreateEffect").disabled = isBusy;
+  document.getElementById("btnRefresh").disabled = isBusy;
 }
