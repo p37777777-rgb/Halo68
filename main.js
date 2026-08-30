@@ -1,19 +1,6 @@
-//注册面板/命令入口 文件存储 API 的入口
-const { entrypoints, storage } = require("uxp");
-//Photoshop 本体 核心事务：历史记录、事件 枚举常量
-const { app, core, constants } = require("photoshop");
-//方便调用本地文件api
-const localFileSystem = storage.localFileSystem;
-
-//创建出的图层组的名字
-const EFFECT_GROUP_NAME = "HALO68 Effect";
-const HALO_ASSET_PATH = "resources/IBUKI.png";
-//临时混合模式 = 屏幕（Screen）、不透明度 = 55%、高斯模糊半径 = 18px
-const GLOW = {
-  blendMode: constants.BlendMode.SCREEN, //滤色
-  opacity: 55,
-  blurRadius: 18,
-};
+const { entrypoints } = require("uxp");
+const { createHaloEffect } = require("./halo-effect.js");
+const { refreshLayerList } = require("./tools/components.js");
 
 //向UXP提交注册有这个面板
 entrypoints.setup({
@@ -21,7 +8,7 @@ entrypoints.setup({
     halo68Panel: {
       show() {
         refreshLayerList();
-      }, //调用（点击时用hooks更新show当前的面板）
+      },
     },
   },
 });
@@ -34,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("btnRefresh")
     .addEventListener("click", refreshLayerList);
 });
-
+/*
 async function createHaloEffect() {
   //检查当前文档和图层是否存在
   if (app.documents.length === 0) {
@@ -135,6 +122,9 @@ async function createHaloEffect() {
     setBusy(false);
   }
 }
+*/
+
+/*
 //打开内置png，复制进图层组，同时关闭临时文档
 async function importHaloIntoGroup(haloFile, targetDocument, targetGroup) {
   const haloDocument = await app.open(haloFile);
@@ -239,3 +229,4 @@ function setBusy(isBusy) {
   document.getElementById("btnCreateEffect").disabled = isBusy;
   document.getElementById("btnRefresh").disabled = isBusy;
 }
+*/
