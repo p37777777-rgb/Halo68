@@ -22,6 +22,7 @@ const LAYER_NAMES = {
   halo: "Halo",
   background: "Background",
 };
+
 //这些名字只可能由插件生成；用户若选中它们当"原图"，说明是上一轮的残留
 const GENERATED_LAYER_NAMES = [
   LAYER_NAMES.subject,
@@ -49,7 +50,7 @@ async function importHaloIntoGroup(haloFile, targetDocument) {
   await runBatch(
     [
       {
-        _obj: "placeEvent",
+        _obj: "placeEvent",//置入
         null: { _kind: "local", _path: token },
         freeTransformCenterState: {
           _enum: "quadCenterState",
@@ -303,6 +304,7 @@ function setStatus(message, isError = false) {
 
 function setBusy(isBusy) {
   document.getElementById("btnCreateEffect").disabled = isBusy;
+  document.getElementById("btnCreateMasks").disabled = isBusy;
   document.getElementById("btnRefresh").disabled = isBusy;
 }
 

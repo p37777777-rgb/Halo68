@@ -27,6 +27,7 @@
     }
     .primary   { background: #0d6efd; border: 1px solid #0d6efd; color: #ffffff; }
     .secondary { background: #3a3a3a; border: 1px solid #555555; color: #f1f1f1; }
+    .tertiary  { background: #4a3d24; border: 1px solid #806b3d; color: #f1f1f1; }
     .status { margin: 12px 0 0; color: #9dd6ff; font-size: 13px; line-height: 1.5; }
     .status.error { color: #ff9b9b; }
     .layerTree {
@@ -50,6 +51,7 @@
   <div class="hint">1. 打开一张单人照片<br>2. 选中照片图层<br>3. 点击「添加光环」</div>
 
   <button id="btnCreateEffect" class="btn primary" type="button">添加光环（创建图层组）</button>
+  <button id="btnCreateMasks" class="btn tertiary" type="button">自动人物蒙版</button>
   <button id="btnRefresh" class="btn secondary" type="button">刷新图层结构</button>
 
   <div id="status" class="status">就绪。</div>

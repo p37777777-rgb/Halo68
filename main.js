@@ -1,5 +1,6 @@
 const { entrypoints } = require("uxp");
 const { createHaloEffect } = require("./halo-effect.js");
+const { createSubjectMasks } = require("./tools/phase2.js");
 const { refreshLayerList } = require("./tools/components.js");
 
 //向UXP提交注册有这个面板
@@ -17,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("btnCreateEffect")
     .addEventListener("click", createHaloEffect);
+  document
+    .getElementById("btnCreateMasks")
+    .addEventListener("click", createSubjectMasks);
   document
     .getElementById("btnRefresh")
     .addEventListener("click", refreshLayerList);
